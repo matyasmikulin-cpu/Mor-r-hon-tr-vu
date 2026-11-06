@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10251d">
+<title>Morče honí trávu – lesní dobrodružství</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1814;--panel:#142820;--panel2:#1c382b;--line:#355642;--cream:#f2edcf;--muted:#b8c9b6;--gold:#e9c96e}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -15%,#31543a 0,#142a20 48%,#09140f 100%);color:var(--cream);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{width:min(100%,760px);margin:auto;padding:14px 12px 26px}
+header{text-align:center;padding:4px 4px 10px}
+h1{font-size:clamp(24px,6vw,38px);margin:2px 0 3px;letter-spacing:.2px;text-shadow:0 3px 0 #102016}
+.subtitle{color:#c6d7bd;font-size:13px}
+.panel{background:linear-gradient(145deg,#1b3529ed,#10241ced);border:1px solid var(--line);border-radius:18px;padding:12px;margin:9px 0;box-shadow:0 8px 24px #0004}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;font-size:12px;color:#c4d2bd;margin-bottom:5px}
+select,button{font:inherit}
+select{width:100%;background:#0e2018;color:var(--cream);border:1px solid #52735a;border-radius:10px;padding:10px;font-weight:650}
+.stats{display:flex;justify-content:space-around;gap:8px;text-align:center}
+.stat{flex:1;background:#0d2018;border:1px solid #355642;border-radius:12px;padding:8px 4px}
+.stat strong{display:block;font-size:20px;color:#f5df91}
+.stat span{font-size:11px;color:#c2d1bf}
+#game{display:block;width:min(94vw,540px);height:auto;margin:10px auto 5px;border:3px solid #57794d;border-radius:15px;box-shadow:0 9px 28px #0008;background:#13251a;touch-action:none}
+.legend{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;color:#d1ddc9;font-size:12px}
+.legend span{white-space:nowrap}
+.message{text-align:center;min-height:44px;padding:7px 5px;color:#f2d989;font-weight:750;font-size:15px}
+.controls{width:min(100%,270px);margin:8px auto 2px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.controls button{border:1px solid #58775a;background:linear-gradient(#31553b,#1c3828);color:#f7f1d7;border-radius:13px;min-height:52px;font-size:23px;box-shadow:0 3px 0 #0b1811;touch-action:manipulation}
+.controls button:active,.controls button.pressed{transform:translateY(2px);box-shadow:0 1px 0 #0b1811;background:#52744a}
+.controls .center{font-size:20px;color:#f5dc85}
+.actions{display:flex;justify-content:center;gap:9px;margin-top:12px}
+.actions button{border:1px solid #8b7845;border-radius:12px;background:linear-gradient(#e7cf7d,#b99546);color:#172218;padding:10px 18px;font-weight:800}
+.help{font-size:12px;color:#c2d1bf;text-align:center;line-height:1.45;margin:8px 5px 0}
+@media(min-width:600px){main{padding-top:20px}.gamewrap{display:grid;grid-template-columns:1fr 190px;align-items:center;gap:14px}.side{align-self:center}.controls{width:190px}.controls button{min-height:48px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>🌲 Morče honí trávu 🐹</h1>
+  <div class="subtitle">Lesní dobrodružství • uhýbej morčeti a posbírej všechny kytičky!</div>
+</header>
+<section class="panel settings">
+  <div><label for="difficulty">Obtížnost</label><select id="difficulty">
+    <option value="easy">Lehká – morče jde pomaleji</option>
+    <option value="normal" selected>Normální – pozor na morče!</option>
+    <option value="hard">Těžká – morče je rychlé</option>
+  </select></div>
+  <div><label for="grassType">Druh trávy</label><select id="grassType">
+    <option value="🌱">Mladá travička 🌱</option>
+    <option value="☘️">Jetelíček ☘️</option>
+    <option value="🌿" selected>Lesní tráva 🌿</option>
+    <option value="🍀">Čtyřlístek 🍀</option>
+  </select></div>
+</section>
+<section class="panel">
+  <div class="stats">
+    <div class="stat"><strong id="score">0 / 12</strong><span>Kytičky</span></div>
+    <div class="stat"><strong id="level">Normální</strong><span>Obtížnost</span></div>
+    <div class="stat"><strong id="moves">0</strong><span>Tahy</span></div>
+  </div>
+  <div class="gamewrap">
+    <div>
+      <canvas id="game" width="540" height="540" aria-label="Lesní herní mapa"></canvas>
+      <div class="legend"><span>🌿 Ty – tráva</span><span>🐹 Morče</span><span>🌲 Strom – překážka</span><span>🌸 Kytička</span></div>
+      <div class="message" id="message">Nasbírej všech 12 kytiček a nenech se chytit!</div>
+    </div>
+    <div class="side">
+      <div class="controls" aria-label="Ovládání">
+        <button data-x="-1" data-y="-1" aria-label="Nahoru doleva">↖</button><button data-x="0" data-y="-1" aria-label="Nahoru">⬆</button><button data-x="1" data-y="-1" aria-label="Nahoru doprava">↗</button>
+        <button data-x="-1" data-y="0" aria-label="Doleva">⬅</button><button class="center" id="center" aria-label="Druh trávy">🌿</button><button data-x="1" data-y="0" aria-label="Doprava">➡</button>
+        <button data-x="-1" data-y="1" aria-label="Dolů doleva">↙</button><button data-x="0" data-y="1" aria-label="Dolů">⬇</button><button data-x="1" data-y="1" aria-label="Dolů doprava">↘</button>
+      </div>
+      <div class="actions"><button id="restart">🔄 Nová hra</button></div>
+      <p class="help">Ovládej trávu všemi 8 směry. Můžeš použít také šipky na klávesnici. Stromy blokují cestu a morče tě pronásleduje!</p>
+    </div>
+  </div>
+</section>
+</main>
+<script>
+(() => {
+const cvs=document.getElementById('game'),ctx=cvs.getContext('2d');
+const N=9,C=60,scoreEl=document.getElementById('score'),movesEl=document.getElementById('moves'),msg=document.getElementById('message'),diff=document.getElementById('difficulty'),grassSelect=document.getElementById('grassType'),levelEl=document.getElementById('level'),center=document.getElementById('center');
+let player={x:0,y:0},pig={x:8,y:8},trees=[],flowers=[],score=0,moves=0,ended=false,grass='🌿',jokeIndex=0;
+const jokes=['Morče tě dohnalo! Asi mělo turbo v tlapkách. 😂','Chňap! Morče dnes vyhrálo závod. 🐹','Pozor na vousky! Morče tě vystopovalo. 😄','To byla rychlost! Morče si zaslouží mrkvovou medaili. 🥕','Lesní detektiv tě našel. Zkus to znovu! 🕵️'];
+const dirs=[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
+const key=(x,y)=>`${x},${y}`;
+const inside=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
+const blocked=(x,y)=>trees.some(t=>t.x===x&&t.y===y);
+const occupied=(x,y)=>blocked(x,y)||(x===player.x&&y===player.y)||(x===pig.x&&y===pig.y);
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function newGame(){
+ player={x:0,y:0};pig={x:8,y:8};score=0;moves=0;ended=false;trees=[];flowers=[];
+ let cells=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!(x===0&&y===0)&&!(x===8&&y===8))cells.push({x,y});
+ // Keep a guaranteed open route along the top and right edges.
+ const safe=new Set();for(let x=0;x<N;x++)safe.add(key(x,0));for(let y=0;y<N;y++)safe.add(key(8,y));
+ cells=shuffle(cells.filter(p=>!safe.has(key(p.x,p.y))));
+ trees=cells.slice(0,20).map(p=>({...p,type:Math.random()<.85?'pine':'oak'}));
+ let free=cells.slice(20);flowers=shuffle(free).slice(0,12).map((p,i)=>({...p,type:i%4}));
+ update();draw();
+}
+function update(){
+ scoreEl.textContent=`${score} / 12`;movesEl.textContent=moves;
+ levelEl.textContent=diff.value==='easy'?'Lehká':diff.value==='hard'?'Těžká':'Normální';
+ center.textContent=grass;
+}
+function rounded(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function draw(){
+ ctx.clearRect(0,0,540,540);
+ // Rich, dark woodland floor with subtle tile variation and moss flecks.
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+  let px=x*C,py=y*C;
+  ctx.fillStyle=((x+y)%2===0)?'#294832':'#25432f';ctx.fillRect(px,py,C,C);
+  ctx.fillStyle='#45633b';for(let k=0;k<3;k++){let fx=px+((x*17+y*11+k*19)%51)+4,fy=py+((y*23+x*7+k*13)%50)+4;ctx.globalAlpha=.35;ctx.beginPath();ctx.arc(fx,fy,1.5,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+  ctx.strokeStyle='#426044';ctx.globalAlpha=.35;ctx.strokeRect(px+.5,py+.5,C-1,C-1);ctx.globalAlpha=1;
+ }
+ // Soft path highlights
+ ctx.strokeStyle='#718653';ctx.globalAlpha=.12;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(30,30);ctx.lineTo(510,30);ctx.lineTo(510,510);ctx.stroke();ctx.globalAlpha=1;
+ // Trees with shadow, trunk and leafy canopy.
+ trees.forEach(t=>{
+  const cx=t.x*C+30,cy=t.y*C+33;
+  ctx.fillStyle='#14251a';ctx.globalAlpha=.55;ctx.beginPath();ctx.ellipse(cx+2,cy+16,20,8,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  if(t.type==='pine'){
+   ctx.fillStyle='#684a2c';rounded(cx-4,cy+5,8,19,3);
+   ctx.fillStyle='#153d2b';ctx.beginPath();ctx.moveTo(cx,cy-25);ctx.lineTo(cx-23,cy+13);ctx.lineTo(cx+23,cy+13);ctx.closePath();ctx.fill();
+   ctx.fillStyle='#24603a';ctx.beginPath();ctx.moveTo(cx,cy-15);ctx.lineTo(cx-19,cy+7);ctx.lineTo(cx+19,cy+7);ctx.closePath();ctx.fill();
+   ctx.fillStyle='#39754a';ctx.beginPath();ctx.moveTo(cx,cy-7);ctx.lineTo(cx-14,cy+1);ctx.lineTo(cx+14,cy+1);ctx.closePath();ctx.fill();
+  }else{
+   ctx.fillStyle='#76502d';rounded(cx-5,cy-1,10,27,3);
+   ctx.fillStyle='#1b4b31';ctx.beginPath();ctx.arc(cx,cy-7,21,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#347047';ctx.beginPath();ctx.arc(cx-8,cy-12,12,0,Math.PI*2);ctx.arc(cx+9,cy-11,12,0,Math.PI*2);ctx.arc(cx,cy-21,12,0,Math.PI*2);ctx.fill();
+  }
+  ctx.fillStyle='#a5c16a';ctx.globalAlpha=.45;ctx.beginPath();ctx.arc(cx-7,cy-12,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+ });
+ // Collectible flowers
+ const blooms=['🌸','🌼','🌺','🌷'];
+ flowers.forEach(f=>{ctx.font='27px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(blooms[f.type],f.x*C+30,f.y*C+30);});
+ // Player grass and pursuing guinea pig
+ ctx.font='35px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText(grass,player.x*C+30,player.y*C+30);
+ ctx.font='36px system-ui';ctx.fillText('🐹',pig.x*C+30,pig.y*C+30);
+}
+function pathStep(from,to){
+ const q=[{...from,first:null}],seen=new Set([key(from.x,from.y)]);
+ while(q.length){let cur=q.shift();if(cur.x===to.x&&cur.y===to.y)return cur.first;
+  for(const [dx,dy] of dirs){let x=cur.x+dx,y=cur.y+dy,k=key(x,y);if(!inside(x,y)||blocked(x,y)||seen.has(k))continue;seen.add(k);q.push({x,y,first:cur.first||{x,y}});}
+ }
+ return null;
+}
+function catchPlayer(){ended=true;msg.textContent='Byl jsi chycen morčetem! '+jokes[jokeIndex++%jokes.length];msg.style.color='#ff9a83';}
+function move(dx,dy){
+ if(ended)return;let x=player.x+dx,y=player.y+dy;
+ if(!inside(x,y)||blocked(x,y))return;
+ player={x,y};moves++;
+ flowers=flowers.filter(f=>{if(f.x===x&&f.y===y){score++;return false;}return true;});
+ if(player.x===pig.x&&player.y===pig.y){catchPlayer();update();draw();return;}
+ let steps=diff.value==='easy'?(moves%2===0?1:0):diff.value==='hard'?2:1;
+ for(let i=0;i<steps&&!ended;i++){
+  const step=pathStep(pig,player);if(!step)break;pig=step;
+  if(pig.x===player.x&&pig.y===player.y)catchPlayer();
+ }
+ if(!ended&&score===12){ended=true;msg.textContent='🏆 VYHRÁL/A JSI! Posbíral/a jsi všechny kytičky a utekl/a morčeti!';msg.style.color='#f5df91';}
+ else if(!ended){msg.textContent='Pozor! Morče tě pronásleduje. Posbírej všechny kytičky!';msg.style.color='#f2d989';}
+ update();draw();
+}
+document.querySelectorAll('[data-x]').forEach(b=>{
+ const run=()=>move(Number(b.dataset.x),Number(b.dataset.y));
+ b.addEventListener('click',run);
+});
+window.addEventListener('keydown',e=>{
+ const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1]};
+ if(map[e.key]){e.preventDefault();move(...map[e.key]);}
+});
+document.getElementById('restart').addEventListener('click',()=>{msg.style.color='#f2d989';msg.textContent='Nový les! Zkus posbírat všech 12 kytiček.';newGame();});
+diff.addEventListener('change',()=>{update();msg.textContent='Obtížnost změněna. Hodně štěstí v lese!';});
+grassSelect.addEventListener('change',()=>{grass=grassSelect.value;update();draw();});
+newGame();
+})();
+</script>
+</body>
+</html>
